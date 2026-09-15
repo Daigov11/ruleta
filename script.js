@@ -30,6 +30,40 @@ const sessionSelect = document.getElementById("sessionSelect");
 const saveSessionBtn = document.getElementById("saveSessionBtn");
 const loadSessionBtn = document.getElementById("loadSessionBtn");
 const deleteSessionBtn = document.getElementById("deleteSessionBtn");
+const enableOptionsCheckbox = document.getElementById("enableOptions");
+const optionsEditor = document.getElementById("optionsEditor");
+const resultCard = document.getElementById("resultCard");
+
+enableOptionsCheckbox.addEventListener("change", () => {
+  optionsEditor.classList.toggle("hidden", !enableOptionsCheckbox.checked);
+});
+
+function collectOptionsFromEditor() {
+  if (!enableOptionsCheckbox.checked) return null;
+  const rows = Array.from(optionsEditor.querySelectorAll(".option-row"));
+  const correctRadio = optionsEditor.querySelector('input[name="correctOption"]:checked');
+  const correctSlot = correctRadio ? parseInt(correctRadio.value, 10) : -1;
+  const filled = [];
+  rows.forEach((row, idx) => {
+    const input = row.querySelector(".option-input");
+    const text = input.value.trim();
+    if (text) filled.push({ text, wasCorrect: idx === correctSlot });
+  });
+  if (filled.length < 2) return null;
+  const letters = ["A", "B", "C", "D"];
+  const options = filled.map((f, i) => ({ label: letters[i], text: f.text }));
+  let correctIndex = filled.findIndex((f) => f.wasCorrect);
+  if (correctIndex === -1) correctIndex = 0;
+  return { options, correctIndex };
+}
+
+function resetOptionsEditor() {
+  enableOptionsCheckbox.checked = false;
+  optionsEditor.classList.add("hidden");
+  optionsEditor.querySelectorAll(".option-input").forEach((i) => (i.value = ""));
+  const firstRadio = optionsEditor.querySelector('input[name="correctOption"][value="0"]');
+  if (firstRadio) firstRadio.checked = true;
+}
 
 function defaultQuestions() {
   return [
@@ -180,6 +214,9 @@ function renderList() {
     const li = document.createElement("li");
     li.classList.toggle("used", !!q.used);
 
+    const row = document.createElement("div");
+    row.className = "li-row";
+
     const swatch = document.createElement("span");
     swatch.className = "swatch";
     swatch.style.background = COLORS[i % COLORS.length];
@@ -206,15 +243,26 @@ function renderList() {
       drawWheel();
     });
 
-    li.appendChild(swatch);
-    li.appendChild(contentEl);
+    row.appendChild(swatch);
+    row.appendChild(contentEl);
     if (q.used) {
       const tag = document.createElement("span");
       tag.className = "used-tag";
       tag.textContent = "Ya salió";
-      li.appendChild(tag);
+      row.appendChild(tag);
     }
-    li.appendChild(delBtn);
+    row.appendChild(delBtn);
+    li.appendChild(row);
+
+    if (q.options && q.options.length) {
+      const preview = document.createElement("div");
+      preview.className = "q-options-preview";
+      preview.textContent = q.options
+        .map((o, oi) => `${o.label}) ${o.text}${oi === q.correctIndex ? " ✓" : ""}`)
+        .join("   ");
+      li.appendChild(preview);
+    }
+
     questionList.appendChild(li);
   });
 
@@ -353,9 +401,16 @@ addForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const value = questionInput.value.trim();
   if (!value) return;
-  questions.push({ type: "text", content: value });
+  const q = { type: "text", content: value, used: false };
+  const opts = collectOptionsFromEditor();
+  if (opts) {
+    q.options = opts.options;
+    q.correctIndex = opts.correctIndex;
+  }
+  questions.push(q);
   saveQuestions();
   questionInput.value = "";
+  resetOptionsEditor();
   renderList();
   drawWheel();
 });
@@ -395,8 +450,15 @@ imageFileInput.addEventListener("change", async () => {
   if (!file) return;
   try {
     const dataUrl = await compressImage(file);
-    questions.push({ type: "image", content: dataUrl });
+    const q = { type: "image", content: dataUrl, used: false };
+    const opts = collectOptionsFromEditor();
+    if (opts) {
+      q.options = opts.options;
+      q.correctIndex = opts.correctIndex;
+    }
+    questions.push(q);
     saveQuestions();
+    resetOptionsEditor();
     renderList();
     drawWheel();
   } catch (e) {
@@ -464,6 +526,9 @@ resetUsedBtn.addEventListener("click", () => {
 
 function showResult(question) {
   resultContent.innerHTML = "";
+  const hasOptions = !!(question.options && question.options.length);
+  resultCard.classList.toggle("has-options", hasOptions);
+
   if (question.type === "image") {
     const img = document.createElement("img");
     img.className = "result-image";
@@ -475,7 +540,66 @@ function showResult(question) {
     span.textContent = question.content;
     resultContent.appendChild(span);
   }
+
+  if (hasOptions) {
+    const optsWrap = document.createElement("div");
+    optsWrap.className = "result-options";
+    question.options.forEach((opt, i) => {
+      const item = document.createElement("div");
+      item.className = "result-option";
+      item.dataset.idx = i;
+
+      const lbl = document.createElement("span");
+      lbl.className = "opt-label";
+      lbl.textContent = opt.label + ")";
+
+      const txt = document.createElement("span");
+      txt.className = "opt-text";
+      txt.textContent = opt.text;
+
+      item.appendChild(lbl);
+      item.appendChild(txt);
+      optsWrap.appendChild(item);
+    });
+    resultContent.appendChild(optsWrap);
+
+    const revealBtn = document.createElement("button");
+    revealBtn.type = "button";
+    revealBtn.className = "reveal-btn";
+    revealBtn.textContent = "Revelar respuesta";
+    revealBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (revealBtn.disabled) return;
+      const correctEl = optsWrap.querySelector(`[data-idx="${question.correctIndex}"]`);
+      if (correctEl) correctEl.classList.add("correct");
+      launchConfetti();
+      revealBtn.disabled = true;
+      revealBtn.textContent = "¡Respuesta revelada!";
+    });
+    resultContent.appendChild(revealBtn);
+  }
+
   overlay.classList.remove("hidden");
+}
+
+function launchConfetti() {
+  const colors = ["#ff6b6b", "#4f7cff", "#ffd23f", "#4fd6a8", "#c874ff", "#ff9f4f", "#4fc9ff", "#ff5ca8"];
+  const count = 140;
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    const duration = 2.2 + Math.random() * 1.6;
+    const delay = Math.random() * 0.3;
+    const rot = 360 + Math.random() * 720;
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.setProperty("--rot", rot + "deg");
+    piece.style.animationDuration = duration + "s";
+    piece.style.animationDelay = delay + "s";
+    piece.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), (duration + delay) * 1000 + 150);
+  }
 }
 
 overlay.addEventListener("click", () => {

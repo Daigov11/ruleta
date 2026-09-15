@@ -19,6 +19,33 @@
         <button type="submit">Agregar</button>
       </form>
 
+      <div class="options-toggle">
+        <label><input type="checkbox" id="enableOptions"> Agregar alternativas (A, B, C, D)</label>
+      </div>
+      <div id="optionsEditor" class="options-editor hidden">
+        <div class="option-row">
+          <input type="radio" name="correctOption" value="0" id="correctA" checked>
+          <label for="correctA">A)</label>
+          <input type="text" class="option-input" data-idx="0" placeholder="Alternativa A">
+        </div>
+        <div class="option-row">
+          <input type="radio" name="correctOption" value="1" id="correctB">
+          <label for="correctB">B)</label>
+          <input type="text" class="option-input" data-idx="1" placeholder="Alternativa B">
+        </div>
+        <div class="option-row">
+          <input type="radio" name="correctOption" value="2" id="correctC">
+          <label for="correctC">C)</label>
+          <input type="text" class="option-input" data-idx="2" placeholder="Alternativa C">
+        </div>
+        <div class="option-row">
+          <input type="radio" name="correctOption" value="3" id="correctD">
+          <label for="correctD">D)</label>
+          <input type="text" class="option-input" data-idx="3" placeholder="Alternativa D">
+        </div>
+        <p class="hint-small">Marca el círculo de la alternativa correcta. Se aplica a la próxima pregunta (texto o imagen) que agregues.</p>
+      </div>
+
       <div class="or-divider">o</div>
 
       <button type="button" id="addImageBtn" class="secondary-btn">📷 Agregar imagen del problema</button>
@@ -53,7 +80,7 @@
 
   <!-- Result overlay, styled like the reference card -->
   <div id="overlay" class="overlay hidden">
-    <div class="result-card">
+    <div class="result-card" id="resultCard">
       <div id="resultContent"></div>
       <div class="result-arrow"></div>
     </div>
