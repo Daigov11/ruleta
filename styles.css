@@ -69,6 +69,29 @@ h1 {
 }
 #addForm button:hover { background: #3d68e6; }
 
+.or-divider {
+  text-align: center;
+  color: #7a8194;
+  font-size: 0.8rem;
+  margin: 4px 0 10px;
+}
+
+.secondary-btn {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px dashed #4f7cff;
+  border-radius: 8px;
+  background: transparent;
+  color: #9db4ff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.secondary-btn:hover {
+  background: rgba(79, 124, 255, 0.12);
+}
+
 #questionList {
   list-style: none;
   margin: 0;
@@ -104,6 +127,14 @@ h1 {
   flex: 1;
 }
 
+#questionList li .q-thumb {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
 #questionList li button {
   background: none;
   border: none;
@@ -119,6 +150,51 @@ h1 {
   margin: 10px 0 0;
 }
 .hint.hidden { display: none; }
+
+/* --- Sessions --- */
+.sessions {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #3d4457;
+}
+
+.sessions h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+
+#sessionSelect {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #3d4457;
+  background: #1b1f2a;
+  color: #fff;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.session-actions button {
+  flex: 1;
+  padding: 7px 6px;
+  border: none;
+  border-radius: 8px;
+  background: #3d4457;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.session-actions button:hover { filter: brightness(1.2); }
+.session-actions button.danger {
+  background: #5c2b2b;
+  color: #ff9d9d;
+}
 
 /* --- Wheel --- */
 .wheel-area {
@@ -217,7 +293,13 @@ h1 {
   to { transform: scale(1); }
 }
 
-.result-card #resultText {
+#resultContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.result-text {
   display: block;
   font-size: 3rem;
   font-weight: 800;
@@ -225,6 +307,14 @@ h1 {
   text-align: center;
   word-break: break-word;
   line-height: 1.15;
+}
+
+.result-image {
+  display: block;
+  max-width: min(64vw, 460px);
+  max-height: 60vh;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
 }
 
 .result-arrow {

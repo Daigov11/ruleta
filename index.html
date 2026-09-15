@@ -18,8 +18,26 @@
         <input type="text" id="questionInput" placeholder="Escribe una pregunta (ej: x + 3 = 16)" autocomplete="off">
         <button type="submit">Agregar</button>
       </form>
+
+      <div class="or-divider">o</div>
+
+      <button type="button" id="addImageBtn" class="secondary-btn">📷 Agregar imagen del problema</button>
+      <input type="file" id="imageFileInput" accept="image/*" hidden>
+
       <ul id="questionList"></ul>
       <p class="hint" id="emptyHint">Agrega al menos 2 preguntas para poder girar.</p>
+
+      <div class="sessions">
+        <h2>Sesiones guardadas</h2>
+        <select id="sessionSelect">
+          <option value="">— Selecciona una sesión —</option>
+        </select>
+        <div class="session-actions">
+          <button type="button" id="saveSessionBtn">Guardar</button>
+          <button type="button" id="loadSessionBtn">Cargar</button>
+          <button type="button" id="deleteSessionBtn" class="danger">Eliminar</button>
+        </div>
+      </div>
     </div>
 
     <div class="wheel-area">
@@ -35,7 +53,7 @@
   <!-- Result overlay, styled like the reference card -->
   <div id="overlay" class="overlay hidden">
     <div class="result-card">
-      <span id="resultText"></span>
+      <div id="resultContent"></div>
       <div class="result-arrow"></div>
     </div>
   </div>

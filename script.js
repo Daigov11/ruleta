@@ -5,10 +5,14 @@ const COLORS = [
 ];
 
 const STORAGE_KEY = "ruleta-preguntas";
+const SESSIONS_KEY = "ruleta-sesiones";
+const IMAGE_MAX_DIM = 480;
+const IMAGE_QUALITY = 0.8;
 
 let questions = loadQuestions();
 let currentRotation = 0;
 let spinning = false;
+const imageCache = {};
 
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
@@ -18,21 +22,118 @@ const questionList = document.getElementById("questionList");
 const emptyHint = document.getElementById("emptyHint");
 const spinBtn = document.getElementById("spinBtn");
 const overlay = document.getElementById("overlay");
-const resultText = document.getElementById("resultText");
+const resultContent = document.getElementById("resultContent");
+const addImageBtn = document.getElementById("addImageBtn");
+const imageFileInput = document.getElementById("imageFileInput");
+const sessionSelect = document.getElementById("sessionSelect");
+const saveSessionBtn = document.getElementById("saveSessionBtn");
+const loadSessionBtn = document.getElementById("loadSessionBtn");
+const deleteSessionBtn = document.getElementById("deleteSessionBtn");
+
+function defaultQuestions() {
+  return [
+    { type: "text", content: "x + 3 = 16" },
+    { type: "text", content: "2x = 10" },
+    { type: "text", content: "x - 5 = 7" },
+    { type: "text", content: "3x + 1 = 13" },
+  ];
+}
 
 function loadQuestions() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed.map((q) =>
+        typeof q === "string" ? { type: "text", content: q } : q
+      );
+    }
   } catch (e) {}
-  return ["x + 3 = 16", "2x = 10", "x - 5 = 7", "3x + 1 = 13"];
+  return defaultQuestions();
 }
 
 function saveQuestions() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(questions));
-  } catch (e) {}
+  } catch (e) {
+    alert("No se pudo guardar (el almacenamiento local está lleno, prueba con imágenes más pequeñas).");
+  }
 }
+
+function loadSessions() {
+  try {
+    const raw = localStorage.getItem(SESSIONS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+
+function saveSessions(sessions) {
+  try {
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+    return true;
+  } catch (e) {
+    alert("No se pudo guardar la sesión (el almacenamiento local está lleno).");
+    return false;
+  }
+}
+
+function renderSessionSelect() {
+  const sessions = loadSessions();
+  const names = Object.keys(sessions).sort((a, b) => a.localeCompare(b));
+  const current = sessionSelect.value;
+  sessionSelect.innerHTML = '<option value="">— Selecciona una sesión —</option>';
+  names.forEach((name) => {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    sessionSelect.appendChild(opt);
+  });
+  if (names.includes(current)) sessionSelect.value = current;
+}
+
+saveSessionBtn.addEventListener("click", () => {
+  if (questions.length === 0) {
+    alert("No hay preguntas para guardar en una sesión.");
+    return;
+  }
+  const name = prompt("Nombre de la sesión:");
+  if (!name) return;
+  const sessions = loadSessions();
+  if (sessions[name] && !confirm(`Ya existe una sesión "${name}". ¿Sobrescribirla?`)) return;
+  sessions[name] = questions;
+  if (saveSessions(sessions)) {
+    renderSessionSelect();
+    sessionSelect.value = name;
+  }
+});
+
+loadSessionBtn.addEventListener("click", () => {
+  const name = sessionSelect.value;
+  if (!name) {
+    alert("Selecciona una sesión para cargar.");
+    return;
+  }
+  const sessions = loadSessions();
+  if (!sessions[name]) return;
+  if (questions.length > 0 && !confirm("Esto reemplazará las preguntas actuales. ¿Continuar?")) return;
+  questions = JSON.parse(JSON.stringify(sessions[name]));
+  saveQuestions();
+  renderList();
+  drawWheel();
+});
+
+deleteSessionBtn.addEventListener("click", () => {
+  const name = sessionSelect.value;
+  if (!name) {
+    alert("Selecciona una sesión para eliminar.");
+    return;
+  }
+  if (!confirm(`¿Eliminar la sesión "${name}"?`)) return;
+  const sessions = loadSessions();
+  delete sessions[name];
+  if (saveSessions(sessions)) renderSessionSelect();
+});
 
 function renderList() {
   questionList.innerHTML = "";
@@ -43,9 +144,17 @@ function renderList() {
     swatch.className = "swatch";
     swatch.style.background = COLORS[i % COLORS.length];
 
-    const text = document.createElement("span");
-    text.className = "q-text";
-    text.textContent = q;
+    let contentEl;
+    if (q.type === "image") {
+      contentEl = document.createElement("img");
+      contentEl.className = "q-thumb";
+      contentEl.src = q.content;
+      contentEl.alt = "Pregunta (imagen)";
+    } else {
+      contentEl = document.createElement("span");
+      contentEl.className = "q-text";
+      contentEl.textContent = q.content;
+    }
 
     const delBtn = document.createElement("button");
     delBtn.textContent = "✕";
@@ -58,7 +167,7 @@ function renderList() {
     });
 
     li.appendChild(swatch);
-    li.appendChild(text);
+    li.appendChild(contentEl);
     li.appendChild(delBtn);
     questionList.appendChild(li);
   });
@@ -82,6 +191,27 @@ function wrapText(ctx, text, maxWidth) {
   }
   if (line) lines.push(line);
   return lines;
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function getImage(src) {
+  let img = imageCache[src];
+  if (!img) {
+    img = new Image();
+    img.onload = () => drawWheel();
+    img.src = src;
+    imageCache[src] = img;
+  }
+  return img;
 }
 
 function drawWheel() {
@@ -124,16 +254,41 @@ function drawWheel() {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(start + seg / 2);
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#1b1f2a";
-    ctx.font = "bold 15px sans-serif";
-    const lines = wrapText(ctx, q, radius - 40);
-    const lineHeight = 17;
-    const offsetStart = -((lines.length - 1) * lineHeight) / 2;
-    lines.forEach((line, li) => {
-      ctx.fillText(line, radius - 18, offsetStart + li * lineHeight);
-    });
+
+    if (q.type === "image") {
+      const img = getImage(q.content);
+      const boxSize = Math.min(64, radius * 0.32);
+      const boxX = radius - 24 - boxSize;
+      const boxY = -boxSize / 2;
+
+      if (img.complete && img.naturalWidth) {
+        ctx.save();
+        roundRectPath(ctx, boxX, boxY, boxSize, boxSize, 8);
+        ctx.clip();
+        ctx.drawImage(img, boxX, boxY, boxSize, boxSize);
+        ctx.restore();
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.lineWidth = 2;
+        roundRectPath(ctx, boxX, boxY, boxSize, boxSize, 8);
+        ctx.stroke();
+      } else {
+        roundRectPath(ctx, boxX, boxY, boxSize, boxSize, 8);
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fill();
+      }
+    } else {
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#1b1f2a";
+      ctx.font = "bold 15px sans-serif";
+      const lines = wrapText(ctx, q.content, radius - 40);
+      const lineHeight = 17;
+      const offsetStart = -((lines.length - 1) * lineHeight) / 2;
+      lines.forEach((line, li) => {
+        ctx.fillText(line, radius - 18, offsetStart + li * lineHeight);
+      });
+    }
+
     ctx.restore();
   });
 
@@ -150,11 +305,57 @@ addForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const value = questionInput.value.trim();
   if (!value) return;
-  questions.push(value);
+  questions.push({ type: "text", content: value });
   saveQuestions();
   questionInput.value = "";
   renderList();
   drawWheel();
+});
+
+function compressImage(file, maxDim = IMAGE_MAX_DIM, quality = IMAGE_QUALITY) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxDim) {
+          height = Math.round(height * (maxDim / width));
+          width = maxDim;
+        } else if (height > maxDim) {
+          width = Math.round(width * (maxDim / height));
+          height = maxDim;
+        }
+        const off = document.createElement("canvas");
+        off.width = width;
+        off.height = height;
+        off.getContext("2d").drawImage(img, 0, 0, width, height);
+        resolve(off.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+addImageBtn.addEventListener("click", () => imageFileInput.click());
+
+imageFileInput.addEventListener("change", async () => {
+  const file = imageFileInput.files[0];
+  if (!file) return;
+  try {
+    const dataUrl = await compressImage(file);
+    questions.push({ type: "image", content: dataUrl });
+    saveQuestions();
+    renderList();
+    drawWheel();
+  } catch (e) {
+    alert("No se pudo cargar la imagen.");
+  } finally {
+    imageFileInput.value = "";
+  }
 });
 
 function normalizeDeg(deg) {
@@ -192,8 +393,19 @@ spinBtn.addEventListener("click", () => {
   canvas.addEventListener("transitionend", onEnd);
 });
 
-function showResult(text) {
-  resultText.textContent = text;
+function showResult(question) {
+  resultContent.innerHTML = "";
+  if (question.type === "image") {
+    const img = document.createElement("img");
+    img.className = "result-image";
+    img.src = question.content;
+    resultContent.appendChild(img);
+  } else {
+    const span = document.createElement("span");
+    span.className = "result-text";
+    span.textContent = question.content;
+    resultContent.appendChild(span);
+  }
   overlay.classList.remove("hidden");
 }
 
@@ -202,4 +414,5 @@ overlay.addEventListener("click", () => {
 });
 
 renderList();
+renderSessionSelect();
 drawWheel();
