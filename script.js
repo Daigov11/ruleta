@@ -21,6 +21,7 @@ const addForm = document.getElementById("addForm");
 const questionList = document.getElementById("questionList");
 const emptyHint = document.getElementById("emptyHint");
 const spinBtn = document.getElementById("spinBtn");
+const resetUsedBtn = document.getElementById("resetUsedBtn");
 const overlay = document.getElementById("overlay");
 const resultContent = document.getElementById("resultContent");
 const addImageBtn = document.getElementById("addImageBtn");
@@ -32,10 +33,10 @@ const deleteSessionBtn = document.getElementById("deleteSessionBtn");
 
 function defaultQuestions() {
   return [
-    { type: "text", content: "x + 3 = 16" },
-    { type: "text", content: "2x = 10" },
-    { type: "text", content: "x - 5 = 7" },
-    { type: "text", content: "3x + 1 = 13" },
+    { type: "text", content: "x + 3 = 16", used: false },
+    { type: "text", content: "2x = 10", used: false },
+    { type: "text", content: "x - 5 = 7", used: false },
+    { type: "text", content: "3x + 1 = 13", used: false },
   ];
 }
 
@@ -45,7 +46,9 @@ function loadQuestions() {
     if (raw) {
       const parsed = JSON.parse(raw);
       return parsed.map((q) =>
-        typeof q === "string" ? { type: "text", content: q } : q
+        typeof q === "string"
+          ? { type: "text", content: q, used: false }
+          : { used: false, ...q }
       );
     }
   } catch (e) {}
@@ -117,7 +120,7 @@ loadSessionBtn.addEventListener("click", () => {
   const sessions = loadSessions();
   if (!sessions[name]) return;
   if (questions.length > 0 && !confirm("Esto reemplazará las preguntas actuales. ¿Continuar?")) return;
-  questions = JSON.parse(JSON.stringify(sessions[name]));
+  questions = JSON.parse(JSON.stringify(sessions[name])).map((q) => ({ ...q, used: false }));
   saveQuestions();
   renderList();
   drawWheel();
@@ -139,6 +142,7 @@ function renderList() {
   questionList.innerHTML = "";
   questions.forEach((q, i) => {
     const li = document.createElement("li");
+    li.classList.toggle("used", !!q.used);
 
     const swatch = document.createElement("span");
     swatch.className = "swatch";
@@ -168,12 +172,19 @@ function renderList() {
 
     li.appendChild(swatch);
     li.appendChild(contentEl);
+    if (q.used) {
+      const tag = document.createElement("span");
+      tag.className = "used-tag";
+      tag.textContent = "Ya salió";
+      li.appendChild(tag);
+    }
     li.appendChild(delBtn);
     questionList.appendChild(li);
   });
 
   emptyHint.classList.toggle("hidden", questions.length > 0);
   spinBtn.disabled = questions.length < 2 || spinning;
+  resetUsedBtn.hidden = questions.every((q) => !q.used);
 }
 
 function wrapText(ctx, text, maxWidth) {
@@ -245,7 +256,7 @@ function drawWheel() {
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, radius, start, end);
     ctx.closePath();
-    ctx.fillStyle = COLORS[i % COLORS.length];
+    ctx.fillStyle = q.used ? "#3a3f4d" : COLORS[i % COLORS.length];
     ctx.fill();
     ctx.strokeStyle = "rgba(0,0,0,0.15)";
     ctx.lineWidth = 2;
@@ -254,6 +265,7 @@ function drawWheel() {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(start + seg / 2);
+    ctx.globalAlpha = q.used ? 0.4 : 1;
 
     if (q.type === "image") {
       const img = getImage(q.content);
@@ -364,12 +376,22 @@ function normalizeDeg(deg) {
 
 spinBtn.addEventListener("click", () => {
   if (spinning || questions.length < 2) return;
+
+  const availableIndices = questions
+    .map((q, i) => i)
+    .filter((i) => !questions[i].used);
+
+  if (availableIndices.length === 0) {
+    alert('¡Ya salieron todas las preguntas! Pulsa "Reiniciar preguntas" para volver a jugar.');
+    return;
+  }
+
   spinning = true;
   spinBtn.disabled = true;
 
   const n = questions.length;
   const segDeg = 360 / n;
-  const targetIndex = Math.floor(Math.random() * n);
+  const targetIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
   const midDeg = targetIndex * segDeg + segDeg / 2;
 
   const jitter = (Math.random() - 0.5) * segDeg * 0.6;
@@ -387,10 +409,21 @@ spinBtn.addEventListener("click", () => {
   const onEnd = () => {
     canvas.removeEventListener("transitionend", onEnd);
     spinning = false;
+    questions[targetIndex].used = true;
+    saveQuestions();
+    renderList();
+    drawWheel();
     spinBtn.disabled = questions.length < 2;
     showResult(questions[targetIndex]);
   };
   canvas.addEventListener("transitionend", onEnd);
+});
+
+resetUsedBtn.addEventListener("click", () => {
+  questions.forEach((q) => (q.used = false));
+  saveQuestions();
+  renderList();
+  drawWheel();
 });
 
 function showResult(question) {

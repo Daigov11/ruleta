@@ -135,6 +135,24 @@ h1 {
   flex-shrink: 0;
 }
 
+#questionList li.used {
+  opacity: 0.55;
+}
+
+#questionList li.used .q-text {
+  text-decoration: line-through;
+}
+
+#questionList li .used-tag {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9aa1b4;
+  background: #1b1f2a;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
 #questionList li button {
   background: none;
   border: none;
@@ -252,6 +270,20 @@ h1 {
 }
 #spinBtn:not(:disabled):hover {
   filter: brightness(1.05);
+}
+
+.reset-btn {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid #3d4457;
+  border-radius: 999px;
+  background: transparent;
+  color: #c7cbdb;
+  cursor: pointer;
+}
+.reset-btn:hover {
+  background: #262b3a;
 }
 
 /* --- Result overlay (styled like the reference screenshot) --- */
