@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruleta de Preguntas</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <h1>🎡 Ruleta de Preguntas</h1>
+
+  <div class="app">
+
+    <div class="panel">
+      <h2>Preguntas</h2>
+      <form id="addForm">
+        <input type="text" id="questionInput" placeholder="Escribe una pregunta (ej: x + 3 = 16)" autocomplete="off">
+        <button type="submit">Agregar</button>
+      </form>
+      <ul id="questionList"></ul>
+      <p class="hint" id="emptyHint">Agrega al menos 2 preguntas para poder girar.</p>
+    </div>
+
+    <div class="wheel-area">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="440" height="440"></canvas>
+      </div>
+      <button id="spinBtn" disabled>Girar</button>
+    </div>
+
+  </div>
+
+  <!-- Result overlay, styled like the reference card -->
+  <div id="overlay" class="overlay hidden">
+    <div class="result-card">
+      <span id="resultText"></span>
+      <div class="result-arrow"></div>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #1b1f2a;
+  color: #f2f2f2;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 64px;
+}
+
+h1 {
+  margin: 0 0 24px;
+  font-size: 1.8rem;
+}
+
+.app {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* --- Question panel --- */
+.panel {
+  background: #262b3a;
+  border-radius: 16px;
+  padding: 20px;
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+#addForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#questionInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #3d4457;
+  background: #1b1f2a;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+#addForm button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #4f7cff;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+#addForm button:hover { background: #3d68e6; }
+
+#questionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#questionList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #1b1f2a;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+#questionList li .swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+#questionList li .q-text {
+  flex: 1;
+}
+
+#questionList li button {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: #9aa1b4;
+  margin: 10px 0 0;
+}
+.hint.hidden { display: none; }
+
+/* --- Wheel --- */
+.wheel-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.wheel-wrap {
+  position: relative;
+  width: 440px;
+  max-width: 90vw;
+}
+
+.wheel-wrap canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 50%;
+  box-shadow: 0 0 0 8px #262b3a, 0 8px 24px rgba(0,0,0,0.5);
+  transition: transform 4.5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+}
+
+.pointer {
+  position: absolute;
+  top: 50%;
+  right: -6px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-right: 26px solid #ffd23f;
+  z-index: 5;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+}
+
+#spinBtn {
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd23f, #ff8f3f);
+  color: #2a1a00;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(255, 143, 63, 0.4);
+}
+#spinBtn:disabled {
+  background: #3d4457;
+  color: #7a8194;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+#spinBtn:not(:disabled):hover {
+  filter: brightness(1.05);
+}
+
+/* --- Result overlay (styled like the reference screenshot) --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+.overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.result-card {
+  position: relative;
+  min-width: 380px;
+  max-width: min(90vw, 720px);
+  padding: 48px 76px 48px 56px;
+  border-radius: 32px;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 35%),
+    linear-gradient(135deg, #ffe9a8, #ffcf5c 45%, #ffb648);
+  box-shadow:
+    0 0 0 8px rgba(255, 255, 255, 0.08),
+    0 28px 80px rgba(0,0,0,0.5),
+    0 0 160px 60px rgba(80, 150, 255, 0.25);
+  transform: scale(0.85);
+  animation: pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) forwards;
+}
+
+@keyframes pop {
+  to { transform: scale(1); }
+}
+
+.result-card #resultText {
+  display: block;
+  font-size: 3rem;
+  font-weight: 800;
+  color: #2a1400;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.15;
+}
+
+.result-arrow {
+  position: absolute;
+  top: 50%;
+  right: -22px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 20px solid transparent;
+  border-bottom: 20px solid transparent;
+  border-left: 26px solid #ffb648;
+}
+
+.overlay-hint {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #e8e8e8;
+}
