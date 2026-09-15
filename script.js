@@ -81,6 +81,42 @@ function saveSessions(sessions) {
   }
 }
 
+function seedDefaultSessions() {
+  const SEED_FLAG = "ruleta-sesiones-seeded";
+  if (localStorage.getItem(SEED_FLAG)) return;
+  localStorage.setItem(SEED_FLAG, "1");
+  if (Object.keys(loadSessions()).length > 0) return;
+
+  const q = (content) => ({ type: "text", content, used: false });
+  const seed = {
+    "Ecuaciones básicas": [
+      q("x + 3 = 16"),
+      q("2x = 10"),
+      q("x - 5 = 7"),
+      q("3x + 1 = 13"),
+    ],
+    "Fracciones": [
+      q("1/2 + 1/4 = ?"),
+      q("3/4 - 1/2 = ?"),
+      q("2/3 × 3/5 = ?"),
+      q("5/6 ÷ 1/2 = ?"),
+    ],
+    "Multiplicación": [
+      q("7 × 8 = ?"),
+      q("9 × 6 = ?"),
+      q("12 × 4 = ?"),
+      q("6 × 6 = ?"),
+    ],
+    "Geometría": [
+      q("Área de un cuadrado de lado 5"),
+      q("Perímetro de un rectángulo de 4 x 6"),
+      q("Área de un triángulo de base 8 y altura 3"),
+      q("Circunferencia de un círculo de radio 7"),
+    ],
+  };
+  saveSessions(seed);
+}
+
 function renderSessionSelect() {
   const sessions = loadSessions();
   const names = Object.keys(sessions).sort((a, b) => a.localeCompare(b));
@@ -446,6 +482,7 @@ overlay.addEventListener("click", () => {
   overlay.classList.add("hidden");
 });
 
+seedDefaultSessions();
 renderList();
 renderSessionSelect();
 drawWheel();
