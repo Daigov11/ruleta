@@ -307,16 +307,16 @@ h1 {
 .result-card {
   position: relative;
   min-width: 380px;
-  max-width: min(90vw, 720px);
-  padding: 48px 76px 48px 56px;
-  border-radius: 32px;
+  width: min(92vw, 1000px);
+  padding: 64px 96px 64px 72px;
+  border-radius: 40px;
   background:
     linear-gradient(115deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 35%),
     linear-gradient(135deg, #ffe9a8, #ffcf5c 45%, #ffb648);
   box-shadow:
-    0 0 0 8px rgba(255, 255, 255, 0.08),
-    0 28px 80px rgba(0,0,0,0.5),
-    0 0 160px 60px rgba(80, 150, 255, 0.25);
+    0 0 0 10px rgba(255, 255, 255, 0.08),
+    0 32px 100px rgba(0,0,0,0.5),
+    0 0 200px 80px rgba(80, 150, 255, 0.25);
   transform: scale(0.85);
   animation: pop 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3) forwards;
 }
@@ -333,7 +333,7 @@ h1 {
 
 .result-text {
   display: block;
-  font-size: 3rem;
+  font-size: clamp(3rem, 7vw, 5.5rem);
   font-weight: 800;
   color: #2a1400;
   text-align: center;
@@ -343,22 +343,23 @@ h1 {
 
 .result-image {
   display: block;
-  max-width: min(64vw, 460px);
-  max-height: 60vh;
-  border-radius: 14px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  width: 100%;
+  max-width: 820px;
+  max-height: 78vh;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 .result-arrow {
   position: absolute;
   top: 50%;
-  right: -22px;
+  right: -30px;
   transform: translateY(-50%);
   width: 0;
   height: 0;
-  border-top: 20px solid transparent;
-  border-bottom: 20px solid transparent;
-  border-left: 26px solid #ffb648;
+  border-top: 28px solid transparent;
+  border-bottom: 28px solid transparent;
+  border-left: 34px solid #ffb648;
 }
 
 .overlay-hint {
