@@ -152,13 +152,18 @@ function seedDefaultSessions() {
 }
 
 function seedPeriodicTableSession() {
-  const SEED_FLAG = "ruleta-tabla-periodica-seeded";
+  const SEED_FLAG = "ruleta-tabla-periodica-seeded-v2";
   if (localStorage.getItem(SEED_FLAG)) return;
   localStorage.setItem(SEED_FLAG, "1");
 
-  const name = "Tabla periódica (1 Hidrógeno - 58 Cerio)";
+  const oldName = "Tabla periódica (1 Hidrógeno - 58 Cerio)";
+  const name = "Tabla periódica (1 Hidrógeno - 56 Bario)";
   const sessions = loadSessions();
-  if (sessions[name]) return;
+  delete sessions[oldName];
+  if (sessions[name]) {
+    saveSessions(sessions);
+    return;
+  }
 
   const elementNames = [
     "Hidrógeno", "Helio", "Litio", "Berilio", "Boro", "Carbono", "Nitrógeno",
@@ -169,7 +174,7 @@ function seedPeriodicTableSession() {
     "Kriptón", "Rubidio", "Estroncio", "Itrio", "Zirconio", "Niobio",
     "Molibdeno", "Tecnecio", "Rutenio", "Rodio", "Paladio", "Plata", "Cadmio",
     "Indio", "Estaño", "Antimonio", "Telurio", "Yodo", "Xenón", "Cesio",
-    "Bario", "Lantano", "Cerio",
+    "Bario",
   ];
 
   sessions[name] = elementNames.map((n) => ({ type: "text", content: n, used: false }));
