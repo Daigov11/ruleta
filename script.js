@@ -151,6 +151,31 @@ function seedDefaultSessions() {
   saveSessions(seed);
 }
 
+function seedPeriodicTableSession() {
+  const SEED_FLAG = "ruleta-tabla-periodica-seeded";
+  if (localStorage.getItem(SEED_FLAG)) return;
+  localStorage.setItem(SEED_FLAG, "1");
+
+  const name = "Tabla periódica (1 Hidrógeno - 58 Cerio)";
+  const sessions = loadSessions();
+  if (sessions[name]) return;
+
+  const elementNames = [
+    "Hidrógeno", "Helio", "Litio", "Berilio", "Boro", "Carbono", "Nitrógeno",
+    "Oxígeno", "Flúor", "Neón", "Sodio", "Magnesio", "Aluminio", "Silicio",
+    "Fósforo", "Azufre", "Cloro", "Argón", "Potasio", "Calcio", "Escandio",
+    "Titanio", "Vanadio", "Cromo", "Manganeso", "Hierro", "Cobalto", "Níquel",
+    "Cobre", "Zinc", "Galio", "Germanio", "Arsénico", "Selenio", "Bromo",
+    "Kriptón", "Rubidio", "Estroncio", "Itrio", "Zirconio", "Niobio",
+    "Molibdeno", "Tecnecio", "Rutenio", "Rodio", "Paladio", "Plata", "Cadmio",
+    "Indio", "Estaño", "Antimonio", "Telurio", "Yodo", "Xenón", "Cesio",
+    "Bario", "Lantano", "Cerio",
+  ];
+
+  sessions[name] = elementNames.map((n) => ({ type: "text", content: n, used: false }));
+  saveSessions(sessions);
+}
+
 function renderSessionSelect() {
   const sessions = loadSessions();
   const names = Object.keys(sessions).sort((a, b) => a.localeCompare(b));
@@ -607,6 +632,7 @@ overlay.addEventListener("click", () => {
 });
 
 seedDefaultSessions();
+seedPeriodicTableSession();
 renderList();
 renderSessionSelect();
 drawWheel();
